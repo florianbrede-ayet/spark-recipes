@@ -1,0 +1,86 @@
+--- a/vllm/config/speculative.py
++++ b/vllm/config/speculative.py
+@@ -145,6 +145,9 @@
+     speculative input batches can contain sequences of different lengths,
+     which may only be supported by certain attention backends. This currently
+     only affects the EAGLE method of speculation."""
++    disable_eagle_block_drop: bool = False
++    """Disable dropping the trailing prefix-cache block for EAGLE-like
++    speculative methods. Upstream vLLM PR #53388 / commit 481839ad."""
+     use_local_argmax_reduction: bool = False
+     """Use vocab-parallel local argmax instead of all-gathering full logits
+     for draft token generation. Reduces communication from O(vocab_size) to
+@@ -1516,6 +1519,9 @@
+         # TODO(ben): Refactor this so the naming is clearer
+         return self.method in ("eagle", "eagle3", "mtp", "dflash", "dspark")
+ 
++    def use_eagle_block_drop(self) -> bool:
++        return self.use_eagle() and not self.disable_eagle_block_drop
++
+     def use_dflash(self) -> bool:
+         return self.method == "dflash"
+ 
+--- a/vllm/v1/core/kv_cache_utils.py
++++ b/vllm/v1/core/kv_cache_utils.py
+@@ -2119,7 +2119,7 @@
+     kv_cache_groups: list[KVCacheGroupSpec],
+ ) -> None:
+     spec_config = vllm_config.speculative_config
+-    if spec_config is None or not spec_config.use_eagle():
++    if spec_config is None or not spec_config.use_eagle_block_drop():
+         return
+     # Detection uses the merged MLA spec's model_version.
+     if not any(
+--- a/vllm/v1/core/single_type_kv_cache_manager.py
++++ b/vllm/v1/core/single_type_kv_cache_manager.py
+@@ -913,10 +913,8 @@
+         )
+         assert dcp_world_size == 1, "DCP not support sliding window attn now."
+         assert pcp_world_size == 1, "PCP not support sliding window attn now."
+-        # Fine-grained partial hits are not supported for sliding window now
+-        assert alignment_tokens % kv_cache_spec.block_size == 0, (
+-            "SlidingWindowManager does not support fine-grained (partial) cache hits"
+-        )
++        # Upstream #53388: resolve_block_hashes converts finer-grained hashes
++        # to the sliding-window group physical block view.
+         block_hashes = resolve_block_hashes(
+             block_hashes,
+             block_pool.hash_block_size,
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -244,6 +244,7 @@
+             )
+         speculative_config = vllm_config.speculative_config
+         self.use_eagle = False
++        self.use_eagle_block_drop = False
+         self.num_spec_tokens = vllm_config.num_speculative_tokens
+         self.num_lookahead_tokens = vllm_config.num_lookahead_tokens
+         self.dynamic_sd_lookup: list[int] | None = None
+@@ -255,6 +256,9 @@
+                     vllm_num_speculative_tokens=self.num_spec_tokens,
+                 )
+             self.use_eagle = speculative_config.use_eagle()
++            self.use_eagle_block_drop = speculative_config.use_eagle_block_drop()
++            if self.use_eagle and not self.use_eagle_block_drop:
++                logger.warning("EAGLE trailing prefix-cache block dropping is disabled.")
+ 
+         # Create the KV cache manager.
+         if hash_block_size is None:
+@@ -265,7 +269,7 @@
+             max_model_len=self.max_model_len,
+             max_in_flight_tokens=vllm_config.max_in_flight_tokens,
+             enable_caching=self.cache_config.enable_prefix_caching,
+-            use_eagle=self.use_eagle,
++            use_eagle=self.use_eagle_block_drop,
+             log_stats=self.log_stats,
+             enable_kv_cache_events=self.enable_kv_cache_events,
+             dcp_world_size=self.dcp_world_size,
+@@ -378,7 +382,7 @@
+         # Eagle, FullAttn prunes the last matching block, so back off one
+         # block to avoid a Mamba cache miss.
+         last_cache_position = request.num_tokens - request.num_tokens % block_size
+-        if self.use_eagle:
++        if self.use_eagle_block_drop:
+             last_cache_position = max(last_cache_position - block_size, 0)
+ 
+         end = start + num_new_tokens

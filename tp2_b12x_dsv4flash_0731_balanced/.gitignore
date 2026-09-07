@@ -1,0 +1,9 @@
+# Site-local configuration and credentials — never commit these.
+config/cluster.env
+config/hf-credentials.env
+
+# Generated per-rank launch scripts.
+render/
+
+# Operator-supplied vendor mods (third-party content).
+mods/*/

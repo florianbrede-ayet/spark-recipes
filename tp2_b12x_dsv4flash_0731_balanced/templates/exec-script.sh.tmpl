@@ -1,0 +1,68 @@
+#!/bin/bash
+# ---------------------------------------------------------------------------
+# In-container launch script for recipe DeepSeek-V4-Flash-0731 (B12X, TP2).
+#
+# TEMPLATE — render with scripts/30-render.sh. Do not edit a rendered copy.
+# Placeholders: @@HOST@@ @@PORT@@ @@MODEL@@ @@RANK_ARGS@@
+#
+# This file is copied into the container as /workspace/exec-script.sh and run
+# as:  docker exec -d <container> bash -c '/workspace/exec-script.sh >> /proc/1/fd/1 2>&1'
+# which reproduces the observed live process tree:
+#   bash -c /workspace/exec-script.sh  ->  /bin/bash /workspace/exec-script.sh
+#     ->  /usr/bin/python3 /usr/local/bin/vllm serve ...
+# `vllm` is deliberately NOT exec'd, so the bash parent stays in the tree.
+#
+# The variables below are the recipe `env:` block. They are exported inside the
+# container process, NOT passed with `docker run -e`. That matches the live
+# deployment: `docker inspect` on the live containers shows none of these in
+# Config.Env, while the serving process runs with them set.
+# ---------------------------------------------------------------------------
+set -euo pipefail
+
+export CUTE_DSL_ARCH="sm_121a"
+export VLLM_USE_AOT_COMPILE="1"
+export VLLM_USE_BREAKABLE_CUDAGRAPH="0"
+export VLLM_USE_MEGA_AOT_ARTIFACT="-1"
+export VLLM_MEMORY_PROFILE_INCLUDE_ATTN="1"
+export VLLM_USE_FLASHINFER_SAMPLER="1"
+export VLLM_USE_B12X_WO_PROJECTION="1"
+export VLLM_USE_B12X_MHC="1"
+export VLLM_USE_B12X_FP8_GEMM="1"
+export VLLM_USE_B12X_MOE="1"
+export VLLM_USE_B12X_SPARSE_INDEXER="1"
+export VLLM_USE_V2_MODEL_RUNNER="1"
+export B12X_MLA_SM120_UNIFIED="1"
+export B12X_MOE_FORCE_A8="1"
+export VLLM_PREFIX_CACHE_RETENTION_INTERVAL="4096"
+export VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS="0"
+
+vllm serve @@MODEL@@ \
+    --host @@HOST@@ \
+    --port @@PORT@@ \
+    --trust-remote-code \
+    --tensor-parallel-size 2 \
+    --kv-cache-dtype fp8 \
+    --block-size 256 \
+    --max-model-len auto \
+    --max-num-seqs 6 \
+    --max-num-batched-tokens 4096 \
+    --long-prefill-token-threshold 1024 \
+    --gpu-memory-utilization 0.87 \
+    --enable-prefix-caching \
+    --enable-prompt-tokens-details \
+    --tokenizer-mode deepseek_v4 \
+    --tool-call-parser deepseek_v4 \
+    --enable-auto-tool-choice \
+    --reasoning-parser deepseek_v4 \
+    --reasoning-config '{"reasoning_parser":"deepseek_v4","reasoning_start_str":"","reasoning_end_str":""}' \
+    --default-chat-template-kwargs.thinking=true \
+    --default-chat-template-kwargs.reasoning_effort=high \
+    --override-generation-config '{"temperature":1.0,"top_p":0.95}' \
+    --load-format instanttensor \
+    --moe-backend b12x \
+    --linear-backend b12x \
+    --attention-backend B12X_MLA_SPARSE \
+    --max-cudagraph-capture-size 64 \
+    --compilation-config '{"cudagraph_mode":"FULL_AND_PIECEWISE","custom_ops":["all"]}' \
+    --speculative-config '{"method":"dspark","num_speculative_tokens":5,"draft_sample_method":"probabilistic","attention_backend":"B12X_MLA_SPARSE"}' \
+    @@RANK_ARGS@@
