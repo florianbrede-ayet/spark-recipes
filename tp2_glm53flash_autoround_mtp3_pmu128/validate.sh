@@ -76,7 +76,7 @@ echo "== launcher invariants =="
 [[ ! -x launch.sh ]]
 grep -Fq -- '--speculative-config '\''{"method":"mtp","num_speculative_tokens":3,"disable_eagle_block_drop":true}'\''' launch.sh
 grep -Fq -- '--prefix-match-unit 128' launch.sh
-grep -Fq -- '--kv-cache-memory 13500000000' launch.sh
+grep -Fq -- '--kv-cache-memory 14000000000' launch.sh
 grep -Fq -- '--kv-cache-dtype fp8_e4m3' launch.sh
 grep -Fq -- '--max-num-batched-tokens 8192' launch.sh
 grep -Fq -- '--max-num-seqs 6' launch.sh

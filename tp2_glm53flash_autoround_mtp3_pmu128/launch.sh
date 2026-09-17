@@ -37,7 +37,7 @@ exec docker run --gpus all -d --name "$NAME" --restart no --network host --ipc h
  "$IMAGE" "$MODEL" --served-model-name Intel/GLM-5.3-Flash-W4A16-AutoRound --host 0.0.0.0 --port "$PORT" --trust-remote-code \
  --tensor-parallel-size 2 --distributed-executor-backend mp --nnodes 2 --node-rank "$RANK" --master-addr "$HEAD" --master-port "$MPORT" \
  --gpu-memory-utilization 0.85 --max-model-len 1048576 --max-num-seqs 6 --block-size 2304 --moe-backend marlin \
- --enable-prefix-caching --enable-prompt-tokens-details --prefix-match-unit 128 --kv-cache-dtype fp8_e4m3 --kv-cache-memory 13500000000 --max-num-batched-tokens 8192 \
+ --enable-prefix-caching --enable-prompt-tokens-details --prefix-match-unit 128 --kv-cache-dtype fp8_e4m3 --kv-cache-memory 14000000000 --max-num-batched-tokens 8192 \
  --limit-mm-per-prompt '{"image":4,"video":0}' \
  --speculative-config '{"method":"mtp","num_speculative_tokens":3,"disable_eagle_block_drop":true}' \
  --tool-call-parser glm47 --enable-auto-tool-choice --reasoning-parser glm45 "${HEADLESS[@]}"

@@ -25,8 +25,8 @@ site before changing a live system.
 | Base image (digest-pinned) | `ghcr.io/tonyd2wild/vllm-glm53-flash@sha256:4def0ef644cb2e9814136dcffd5e385e21bc594f48f3b292234051904abe85a6` (vLLM `0.1.dev20051+g487ecf187`) |
 | Native MTP | `method=mtp`, `num_speculative_tokens=3`, `disable_eagle_block_drop=true` |
 | Scheduler concurrency | `--max-num-seqs 6` |
-| Retrieval/pool | `--prefix-match-unit 128` (PMU128), logical pool 1,920,956 tokens |
-| Prompt cache usage (next start) | `--enable-prompt-tokens-details` exposes `usage.prompt_tokens_details.cached_tokens` |
+| Retrieval/pool | `--prefix-match-unit 128` (PMU128), logical pool 1,994,013 tokens |
+| Prompt cache usage (active) | `--enable-prompt-tokens-details` exposes `usage.prompt_tokens_details.cached_tokens` |
 
 The live node-local image IDs (`sha256:e994…`, `sha256:d368…`) differ per
 node because they were built independently; they are **not** the pin. The
@@ -151,9 +151,11 @@ profile.
 
 `--enable-prompt-tokens-details` exposes per-request prefix-cache reuse as
 `usage.prompt_tokens_details.cached_tokens`. Streaming callers must also send
-`stream_options.include_usage=true` to receive final usage. Changing this flag
-does not affect an already-running container: activation requires a coordinated
-two-rank restart, which causes API downtime and clears the live KV cache.
+`stream_options.include_usage=true` to receive final usage. The flag is active
+in production since the 2026-09-17 restart (verified: identical prompt cold
+0/3060 cached, warm 2944/3060). Changing this flag does not affect an
+already-running container: it applies from the next coordinated two-rank
+restart, which causes API downtime and clears the live KV cache.
 
 Status, logs, stop (stop the head first, then the worker):
 
@@ -167,10 +169,10 @@ docker stop spark_glm53_autoround_mtp3_pmu128   # then the worker (192.168.1.152
 ## Runtime profile (next coordinated start)
 
 GMU 0.85; PMU128 prefix matching with prefix caching and retention interval
-0; KV 13,500,000,000 B/rank, FP8 e4m3; `max_num_seqs=6`;
+0; KV 14,000,000,000 B/rank (raised from 13.5e9 on 2026-09-17), FP8 e4m3; `max_num_seqs=6`;
 `max_num_batched_tokens=8192`; `max_model_len=1048576`; block 2304 (resolved
 scheduler block 4608, Mamba 2304); Marlin MoE; multimodal image 4 / video 0;
-logical KV pool 1,920,956 tokens; native MTP k=3 with
+logical KV pool 1,994,013 tokens (1.90x at 1M context, 464 blocks); native MTP k=3 with
 `disable_eagle_block_drop=true`; prompt token details enabled.
 
 ## Validation evidence
