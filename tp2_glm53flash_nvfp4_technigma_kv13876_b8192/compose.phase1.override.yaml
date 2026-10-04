@@ -1,0 +1,9 @@
+# Recipe-authored overlay. Forwards the Phase 1 peer-wait mitigation into the
+# container; the pinned upstream compose files do not reference this variable,
+# so without this override the setting would be silently dropped. Fail-closed:
+# an unset B12X_ROCE_SPIN_LIMIT aborts the render instead of serving a
+# different profile.
+services:
+  glm53:
+    environment:
+      B12X_ROCE_SPIN_LIMIT: "${B12X_ROCE_SPIN_LIMIT:?spin limit required}"

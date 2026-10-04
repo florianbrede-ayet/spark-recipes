@@ -1,0 +1,8 @@
+# The operator's filled-in site file holds real addresses and paths for a real
+# pair of machines, and the merged environment is derived from it. Neither
+# belongs in this repository. config/profile.env and config/site.env.example
+# stay tracked.
+config/site.env
+config/merged.env
+__pycache__/
+*.pyc

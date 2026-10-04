@@ -12,10 +12,11 @@ that cannot be redistributed.
 | [`tp2_b12x_dsv4flash_0731_balanced/`](tp2_b12x_dsv4flash_0731_balanced/) | `deepseek-ai/DeepSeek-V4-Flash-0731` @ `7872f01b1d1fe23eabc4c98b48bffcef5a386062` | 2 nodes, tensor-parallel 2, API on rank 0 | GMU 0.87 balanced — maxseq 6, batched 4096, threshold 1024, retention 4096, DSpark k5, FP8 KV |
 | [`tp2_glm53flash_autoround_mtp3_pmu128/`](tp2_glm53flash_autoround_mtp3_pmu128/) | `Intel/GLM-5.3-Flash-W4A16-AutoRound` @ `5eee1846f0321058ed73745f9aa16f2aaf0fc0a0` (GPTQ metadata adaptation) | 2 nodes, tensor-parallel 2, API on rank 0 | **Native MTP3 PMU128 (pool 1,920,956, acceptance 52.43%)** — maxseq 6, MNBT 8192, KV 13,500,000,000 B/rank, retention 0, maxlen 1,048,576, block 2304/scheduler 4608, FP8 e4m3 KV, Marlin, image on/video off |
 | [`tp2_glm53flash_autoround_dflash2_k7_pmu128/`](tp2_glm53flash_autoround_dflash2_k7_pmu128/) | `Intel/GLM-5.3-Flash-W4A16-AutoRound` @ `5eee1846f0321058ed73745f9aa16f2aaf0fc0a0` + external `incoai/GLM-5.3-Flash-DFlash2` @ `bf582e4eacc1810f76656d1811693ff6c6737d2a` | 2 nodes, tensor-parallel 2, API on rank 0 | **External DFlash2 k7 + PMU128 (pool 1,814,557)** — maxseq 6, MNBT 8192, KV 13,500,000,000 B/rank, retention 0, maxlen 1,048,576, block 2304/scheduler 4608, FP8 e4m3 KV, Marlin; accepted 4,608-aligned producer cache-miss limitation documented and regression-pinned |
+| [`tp2_glm53flash_nvfp4_technigma_kv13876_b8192/`](tp2_glm53flash_nvfp4_technigma_kv13876_b8192/) | `local-inference-lab/GLM-5.3-Flash-NVFP4-Spark` @ `a608241037e4c2565356bff7ca293f2133888f88` (served by the digest-pinned [technigmaai](https://github.com/technigmaai/glm-5.3-flash-nvfp4-2x-dgx-sparks) R28.8-A image) | 2 nodes, tensor-parallel 2, API on rank 0 | **Site overlay on the pinned upstream deployment** — KV 13,876 MiB/rank fp8, maxseq 6, MNBT 8192, split pages 4096, maxlen 1,047,552, MTP3 with NVFP4 draft head, display-reserved KV on, RoCE spin limit 200,000,000; upstream Compose files referenced by commit and hash, never vendored |
 
 ## Conventions
 
-Full reproduction bundles follow this shape. Concise as-deployed profiles may instead carry only a README, an exact archival launcher, and a focused validator when the heavyweight artifacts are deliberately not redistributed:
+Full reproduction bundles follow this shape. Concise as-deployed profiles may instead carry only a README, an exact archival launcher, and a focused validator when the heavyweight artifacts are deliberately not redistributed. A third shape is an *overlay*: the deployment is owned by an external project, so the recipe carries only its own profile delta, a launcher that points at the operator's own pinned checkout of that project, and tests that prove the delta — nothing from the external project is copied in:
 
 ```
 <recipe>/
@@ -42,16 +43,22 @@ Shared ground rules:
   `scripts/validate.sh` runs a secret scan and a placeholder audit.
 * **No bulk artifacts.** No weights, image layers, caches, logs or raw machine
   identifiers.
+* **No unlicensed redistribution.** Where an external project publishes no
+  license, its files are referenced by commit and content hash and fetched by
+  the operator, never copied into this repository.
 
 ## Validating a recipe
 
 ```bash
-cd <recipe> && scripts/validate.sh
+cd <recipe> && scripts/validate.sh     # bundles with a scripts/ directory
+cd <recipe> && ./validate.sh           # concise profiles and overlays
 ```
 
 Runs offline, needs no cluster and no credentials: bash syntax and lint, required
 files and cross-references, `SHA256SUMS` verification, canonical-argv render
-check, placeholder audit and secret scan.
+check, placeholder audit and secret scan. Validators that can prove more when
+given an external input say so explicitly and name what the cheaper mode did
+*not* check.
 
 ## License
 
