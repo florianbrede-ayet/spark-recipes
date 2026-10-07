@@ -68,3 +68,29 @@ weights. No changes were made to the bundled configuration fixture.
 The vLLM-derived source fixtures and overlays carrying inline
 `SPDX-License-Identifier: Apache-2.0` and copyright notices remain subject to
 those notices and the Apache License 2.0.
+
+## MiaAI-Lab TensorFold recipe and the PR #78 spill tier (bundled as a patch, Apache-2.0)
+
+`tp2_glm53flash_exl3_tensorfold_v18_spill_c8/recipe-v1.8-spill.patch` is a diff
+against [`MiaAI-Lab/GLM-5.3-Flash-EXL3-2x-DGX-Sparks-TensorFold`](https://github.com/MiaAI-Lab/GLM-5.3-Flash-EXL3-2x-DGX-Sparks-TensorFold)
+at commit `33b50fde06fd7ea604cbc6a663880068ab1e2ee4`. That repository is
+licensed under the Apache License 2.0.
+
+The diff modifies these upstream files:
+
+* `README.md`, `CHANGELOG.md`, `CREDITS.md`, `NOTICE`;
+* `start.sh`, `stop.sh`, `scripts/config.sh`;
+* `tools/pool_room_check.py`, `tools/test_queued_cancellation.py`.
+
+It also adds new files, among them `patches/0084-glm-spill-tier.patch`. That
+patch ports the spill tier from upstream pull request #78 by wojo (also proposed
+to TensorFold as ashhart/TensorFold#427) onto recipe v1.8. At image build time it
+modifies [TensorFold](https://github.com/ashhart/TensorFold) v0.6.0 sources
+(Apache-2.0).
+
+The diff itself marks every file it changes. Upstream's `NOTICE` is retained and
+extended, and copyright remains with the respective authors.
+
+The checkpoint `Mia-AiLab/GLM-5.3-Flash-EXL3-4bpw-TensorFold` and the drafter
+`incoai/GLM-5.3-Flash-DFlash2` (CC BY-NC-ND 4.0) are referenced by revision only
+and not redistributed.
