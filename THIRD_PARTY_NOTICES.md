@@ -94,3 +94,13 @@ extended, and copyright remains with the respective authors.
 The checkpoint `Mia-AiLab/GLM-5.3-Flash-EXL3-4bpw-TensorFold` and the drafter
 `incoai/GLM-5.3-Flash-DFlash2` (CC BY-NC-ND 4.0) are referenced by revision only
 and not redistributed.
+
+## MiaAI-Lab TensorFold recipe v1.10 (referenced, not bundled)
+
+`tp2_glm53flash_exl3_tensorfold_v110_c8/` only references
+[`MiaAI-Lab/GLM-5.3-Flash-EXL3-2x-DGX-Sparks-TensorFold`](https://github.com/MiaAI-Lab/GLM-5.3-Flash-EXL3-2x-DGX-Sparks-TensorFold)
+at commit `7d42f905388a8d7fa91e2dc9458e0a4a68001540` (Apache-2.0) and its
+published container image by digest. No files from that repository or the image
+are bundled; the directory holds only our settings, a validator and checksums.
+The checkpoint and the DFlash2 drafter (CC BY-NC-ND 4.0) are referenced by
+revision only.

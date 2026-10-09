@@ -1,5 +1,7 @@
 # GLM-5.3-Flash EXL3 · TensorFold recipe v1.8 + disk spill tier · C8
 
+> **Superseded** by [`../tp2_glm53flash_exl3_tensorfold_v110_c8/`](../tp2_glm53flash_exl3_tensorfold_v110_c8/) on 2026-10-09: upstream merged this spill tier as patch `0088` (v1.9), so the current deployment uses the published v1.10 image without local patches.
+
 The deployment serving our two-Spark cluster since 2026-10-06:
 
 - the [MiaAI-Lab TensorFold recipe](https://github.com/MiaAI-Lab/GLM-5.3-Flash-EXL3-2x-DGX-Sparks-TensorFold) v1.8;
